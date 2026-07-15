@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Clock3,
   Code2,
-  Command,
   Copy,
   CreditCard,
   Download,
@@ -39,15 +38,15 @@ import {
   Zap,
 } from "lucide-react"
 import { GoogleGenAI, Modality, type LiveServerMessage, type Session } from "@google/genai"
+import { Dithering } from "@paper-design/shaders-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "motion/react"
 
 import { AnimatedNumber } from "@/components/ui/animated-number"
-import { CircuitBoard } from "@/components/ui/circuit-board"
-import { DirectionAwareTabs } from "@/components/ui/direction-aware-tabs"
-import { HeroDitheringRoot, HeroDitheringVisual } from "@/components/ui/hero-dithering"
-import { CircleShapeSvg, CubeWireframeSvg } from "@/components/ui/svg-shapes-animated"
-import { TextAnimate } from "@/components/ui/text-animate"
+import { AgentAudioVisualizerBar } from "@/components/agents-ui/agent-audio-visualizer-bar"
+import { CanvasRevealEffect } from "@/components/ui/canvas-reveal-effect"
+import { HeroDitheringRoot } from "@/components/ui/hero-dithering"
+import { MaskContainer } from "@/components/ui/svg-mask-effect"
 import { TextureOverlay } from "@/components/ui/texture-overlay"
 import {
   TerminalAnimationCommandBar,
@@ -201,64 +200,63 @@ function LiveLatency() {
   return <AnimatedNumber value={milliseconds} format={(value) => `${(value / 1000).toFixed(1)}s`} />
 }
 
-function ActionMapPreview({
+function ProductModelSurface({
   onRun,
   onConsole,
 }: {
   onRun: (action: MappedAction, text: string) => void
   onConsole: () => void
 }) {
-  const [selectedId, setSelectedId] = useState("show-orders-last-week")
-  const selectableActions = mappedActions.filter((action) => ["show-orders-last-week", "open-analytics", "export-report"].includes(action.id))
-  const selected = actionById(selectedId) ?? selectableActions[0]!
+  const choices = mappedActions.filter((action) => ["show-orders-last-week", "open-analytics", "export-report"].includes(action.id))
+  const [selectedId, setSelectedId] = useState(choices[0]?.id ?? "show-orders-last-week")
+  const selected = actionById(selectedId) ?? choices[0]!
 
-  const tabs = [
-    {
-      id: 0,
-      label: "say",
-      content: (
-        <div className="action-map-panel action-map-panel--say">
-          <div className="action-map-orb"><VoiceOrb listening /></div>
-          <div><span className="map-label">spoken command</span><strong>“{selected.examples[0]}.”</strong><p>Natural language stays in the conversation layer.</p></div>
-          <div className="map-wave"><i /><i /><i /><i /><i /><i /><i /></div>
+  return (
+    <div className="model-surface" aria-label="Northstar product model">
+      <CanvasRevealEffect
+        animationSpeed={0.24}
+        colors={[[213, 255, 95], [142, 154, 106]]}
+        dotSize={2}
+        showGradient={false}
+        containerClassName="model-surface__canvas !pointer-events-none !bg-[#11120f]"
+      />
+      <div className="model-surface__content">
+        <div className="model-surface__bar">
+          <span><StatusPip /> Northstar action registry</span>
+          <button onClick={onConsole}>View full model <ChevronRight size={14} /></button>
         </div>
-      ),
-    },
-    {
-      id: 1,
-      label: "map",
-      content: (
-        <div className="action-map-panel action-map-panel--map">
-          <div className="map-function"><span>function</span><code>select_mapped_action</code></div>
-          <div className="map-options">
-            {selectableActions.map((action) => (
+
+        <div className="model-surface__input">
+          <span>incoming request</span>
+          <div><VoiceOrb listening /><strong>“{selected.examples[0]}.”</strong></div>
+          <code>intent → {selected.id}</code>
+        </div>
+
+        <div className="model-surface__resolution">
+          <div className="model-surface__tool">
+            <span>selected tool</span>
+            <strong>select_mapped_action</strong>
+            <code>{selected.id}</code>
+          </div>
+          <div className="model-surface__facts">
+            <span><small>route</small><code>{selected.route}</code></span>
+            <span><small>selector</small><code>{selected.selector}</code></span>
+            <span><small>authority</small><strong>{selected.needsConfirmation ? "operator review" : "ready to execute"}</strong></span>
+          </div>
+        </div>
+
+        <div className="model-surface__footer">
+          <div className="model-surface__choices" aria-label="Choose a mapped action">
+            {choices.map((action) => (
               <button key={action.id} className={action.id === selected.id ? "is-selected" : ""} onClick={() => setSelectedId(action.id)}>
-                <span><StatusPip tone={action.needsConfirmation ? "amber" : "lime"} /> {action.label}</span>
-                <code>{action.id}</code>
+                <StatusPip tone={action.needsConfirmation ? "amber" : "lime"} />
+                <span>{action.label}</span>
               </button>
             ))}
           </div>
-          <p className="map-policy"><ShieldCheck size={14} /> Only registered action IDs can be selected.</p>
+          <button className="model-surface__run" onClick={() => onRun(selected, selected.examples[0])}>{selected.needsConfirmation ? "Review in demo" : "Run in demo"} <ArrowUpRight size={14} /></button>
         </div>
-      ),
-    },
-    {
-      id: 2,
-      label: "run",
-      content: (
-        <div className="action-map-panel action-map-panel--run">
-          <div className="map-run-result"><span className="map-label">resolved action</span><strong>{selected.label}</strong><p>{selected.description}</p><div><code>{selected.selector}</code><span>{selected.needsConfirmation ? "review required" : "ready to run"}</span></div></div>
-          <button className="map-run-button" onClick={() => onRun(selected, selected.examples[0])}><Play size={14} /> Run in the demo</button>
-          <button className="map-console-link" onClick={onConsole}>Inspect every mapped action <ChevronRight size={15} /></button>
-        </div>
-      ),
-    },
-  ]
-
-  return (
-    <div className="action-map-visual">
-      <div className="action-map-header"><div><StatusPip /><span>Northstar action registry</span></div><code>7 actions · 8 routes</code></div>
-      <DirectionAwareTabs tabs={tabs} className="action-map-tabs" rounded="action-map-tabs-shell" roundedInner="action-map-tab-active" />
+      </div>
     </div>
   )
 }
@@ -270,39 +268,47 @@ function MappedProductFlow({
   onRun: (action: MappedAction, text: string) => void
   onConsole: () => void
 }) {
-  const choices = mappedActions.filter((action) => ["show-orders-last-week", "open-analytics", "create-invoice"].includes(action.id))
-  const [selectedId, setSelectedId] = useState(choices[0]?.id ?? "show-orders-last-week")
-  const selected = actionById(selectedId) ?? choices[0]!
-  const isSensitive = selected.needsConfirmation
-  const nodes = [
-    { id: "voice", x: 62, y: 151, label: "Voice", icon: <Mic size={15} />, status: "active" as const, size: "md" as const },
-    { id: "live", x: 218, y: 82, label: "Live", icon: <Volume2 size={15} />, status: "processing" as const, size: "lg" as const },
-    { id: "map", x: 375, y: 151, label: "Map", icon: <Command size={15} />, status: "active" as const, size: "lg" as const },
-    { id: "action", x: 540, y: 151, label: "Action", icon: <Check size={15} />, status: isSensitive ? "processing" as const : "active" as const, size: "md" as const },
-    { id: "policy", x: 375, y: 256, label: isSensitive ? "Review" : "Run", icon: <ShieldCheck size={14} />, status: "active" as const, size: "sm" as const },
-  ]
-  const connections = [
-    { from: "voice", to: "live", animated: true, color: "rgba(213,255,95,.22)", pulseColor: "#d5ff5f" },
-    { from: "live", to: "map", animated: true, color: "rgba(213,255,95,.22)", pulseColor: "#d5ff5f" },
-    { from: "map", to: "action", animated: true, color: "rgba(213,255,95,.22)", pulseColor: "#d5ff5f" },
-    { from: "map", to: "policy", animated: true, color: "rgba(213,255,95,.22)", pulseColor: "#d5ff5f" },
-  ]
+  const action = actionById("show-orders-last-week")!
 
   return (
-    <div className="runtime-flow">
-      <div className="runtime-flow__controls">
-        <h2>Speak to the product.<br />It knows what it can do.</h2>
-        <p>Pick a real mapped request, inspect the constrained path, then run it in the working demo.</p>
-        <div className="runtime-flow__choices">
-          {choices.map((action) => <button className={action.id === selected.id ? "is-active" : ""} key={action.id} onClick={() => setSelectedId(action.id)}><span>{action.label}</span><small>{action.needsConfirmation ? "confirmation" : "ready"}</small></button>)}
+    <div className="product-xray">
+      <div className="product-xray__intro">
+        <div>
+          <span className="product-xray__kicker">The sentence is the interface</span>
+          <h2>Look beneath<br />what was said.</h2>
         </div>
-        <div className="runtime-flow__action"><code>select_mapped_action → {selected.id}</code><button onClick={() => onRun(selected, selected.examples[0])}>{isSensitive ? "Review in demo" : "Run in demo"} <ArrowUpRight size={14} /></button></div>
-        <button className="runtime-flow__console" onClick={onConsole}>Open the full action map <ChevronRight size={15} /></button>
+        <div>
+          <p>The language your user speaks is only the surface. Underneath, Lexicon resolves one named route, one target, and one permissioned action.</p>
+          <button onClick={onConsole}>Inspect the action map <ChevronRight size={15} /></button>
+        </div>
       </div>
-      <div className="runtime-flow__board" aria-label="Mapped voice execution flow">
-        <CircuitBoard nodes={nodes} connections={connections} width={600} height={310} gridSize={20} variant="dark" gridColor="rgba(213,255,95,.08)" traceColor="rgba(213,255,95,.18)" pulseColor="#d5ff5f" nodeColor="rgba(213,255,95,.55)" pulseSpeed={2.4} />
-        <div className="runtime-flow__status"><StatusPip tone={isSensitive ? "amber" : "lime"} /><span>{isSensitive ? "Review remains with the operator" : "Ready to execute"}</span></div>
-      </div>
+      <MaskContainer
+        className="product-xray__field"
+        size={38}
+        revealSize={356}
+        revealText={
+          <div className="product-xray__voice-layer">
+            <div className="product-xray__field-label"><span><Mic size={13} /> spoken request</span><span>move across the sentence</span></div>
+            <div className="product-xray__utterance">
+              <VoiceOrb listening />
+              <strong>“Show orders<br />from last week.”</strong>
+            </div>
+            <div className="product-xray__waveform" aria-hidden><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div>
+            <p>Unmapped language never becomes improvised clicks.</p>
+          </div>
+        }
+      >
+        <div className="product-xray__action-layer">
+          <div className="product-xray__field-label"><span><Zap size={13} /> registered product action</span><span>resolved in 168 ms</span></div>
+          <div className="product-xray__action-name"><span>action</span><code>{action.id}</code></div>
+          <div className="product-xray__facts">
+            <span><small>route</small><code>{action.route}</code></span>
+            <span><small>target</small><code>{action.selector}</code></span>
+            <span><small>authority</small><strong>ready to execute</strong></span>
+          </div>
+          <button onClick={() => onRun(action, action.examples[0])}>Run the mapped action <ArrowUpRight size={15} /></button>
+        </div>
+      </MaskContainer>
     </div>
   )
 }
@@ -827,29 +833,32 @@ export default function Page() {
         <div><button className="text-link" onClick={() => setExperience("auth")}>Sign in</button><button className="text-link" onClick={() => openWorkspace("console")}>Developer console</button><button className="nav-cta" onClick={() => openWorkspace()}>Open demo <ArrowUpRight size={15} /></button></div>
       </header>
 
-      <HeroDitheringRoot className="marketing-hero" srTitle="Software that answers back.">
+      <HeroDitheringRoot className="marketing-hero" srTitle="">
         <TextureOverlay texture="noise" opacity={0.1} className="marketing-hero__texture" />
         <div className="hero-copy">
-          <TextAnimate text="Software that answers back." type="calmInUp" className="cult-hero-title" />
+          <h1>Software that answers back.</h1>
           <p>Lexicon gives every product a reliable voice interface—built from the structure your team already knows, not guesses a browser agent has to make.</p>
           <div className="hero-actions"><button className="primary-cta" onClick={() => openWorkspace()}><Mic size={17} /> Try the live demo</button><a href="#developers">See the SDK <ArrowDownRight size={16} /></a></div>
-          <div className="hero-proof"><span><Check size={14} /> Deterministic actions</span><span><Check size={14} /> Native voice</span><span><Check size={14} /> Your UI, mapped once</span></div>
         </div>
-        <div className="hero-demo" aria-label="Live action demonstration">
-          <div className="demo-topline"><span className="demo-live"><StatusPip /> Live on Northstar</span><span>Lexicon voice agent</span><MoreHorizontal size={18} /></div>
-          <div className="demo-ambient">
-            <div className="ambient-grid" />
-            <HeroDitheringVisual
-              className="lexicon-dither-visual"
-              desktopClassName="lexicon-dither-canvas"
-              desktopShaderProps={{ colorBack: "#151711", colorFront: "#d5ff5f", shape: "swirl", type: "4x4", size: 2, speed: 0.56, scale: 0.72 }}
+        <div className="hero-swirl-container" aria-label="Live action demonstration">
+          <Dithering
+            className="hero-spiral"
+            colorBack="#11120f"
+            colorFront="#d5ff5f"
+            fit="contain"
+            scale={0.72}
+            shape="swirl"
+            size={2}
+            speed={0.56}
+            type="4x4"
+          />
+          <div className="hero-voice-visualizer" aria-hidden>
+            <AgentAudioVisualizerBar
+              color="#d5ff5f"
+              size="xl"
+              state="speaking"
             />
-            <CircleShapeSvg className="hero-shape hero-shape--ring" />
-            <CubeWireframeSvg className="hero-shape hero-shape--cube" />
-            <div className="hero-signal-map" aria-hidden><span>voice</span><i /><span>map</span><i /><span>act</span></div>
           </div>
-          <div className="demo-command"><VoiceOrb listening /><div><span>Listening</span><strong>“Show orders from last week.”</strong></div><div className="waveform"><i /><i /><i /><i /><i /><i /><i /><i /><i /></div></div>
-          <div className="demo-result"><div><CheckCircle2 size={18} /><span><strong>Orders filtered</strong><small>Last 7 days · 24 results</small></span></div><span className="latency"><LiveLatency /></span></div>
         </div>
       </HeroDitheringRoot>
 
@@ -864,7 +873,7 @@ export default function Page() {
       <section id="platform" className="platform-section">
         <ScrollReveal className="platform-copy"><h2>Not another agent<br />that hopes for the best.</h2><p>Generic browser agents have to rediscover a product every time. Lexicon keeps the product model next to the product itself: routes, elements, workflows, and exactly what has authority to act.</p><button onClick={() => openWorkspace("console")}>Explore the action map <ChevronRight size={16} /></button></ScrollReveal>
         <ScrollReveal className="architecture-graphic" delay={0.08}>
-          <ActionMapPreview onRun={(action, text) => { openWorkspace(action.route); runVoiceAction(action, text) }} onConsole={() => openWorkspace("console")} />
+          <ProductModelSurface onRun={(action, text) => { openWorkspace(action.route); runVoiceAction(action, text) }} onConsole={() => openWorkspace("console")} />
         </ScrollReveal>
       </section>
 

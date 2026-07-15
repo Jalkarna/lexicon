@@ -281,7 +281,7 @@ export const HeroDitheringRoot = React.forwardRef<
           ref={ref}
           {...props}
         >
-          <h1 className="sr-only">{srTitle}</h1>
+          {srTitle ? <h1 className="sr-only">{srTitle}</h1> : null}
           {children}
         </section>
       </HeroDitheringContext.Provider>
