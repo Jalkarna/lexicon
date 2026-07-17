@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 720">
+  <defs>
+    <filter id="wide-feather" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="24" />
+    </filter>
+    <filter id="soft-feather" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="11" />
+    </filter>
+  </defs>
+  <path
+    d="M404 24C474 20 535 48 586 79C647 117 687 170 717 232C742 285 730 337 741 395C751 455 715 506 684 554C646 613 591 652 524 674C461 695 403 682 337 691C276 699 224 674 171 644C113 611 83 555 54 498C26 443 31 386 37 328C43 264 62 208 102 157C144 102 196 62 260 45C310 31 355 34 404 24Z"
+    fill="white"
+    opacity="0.34"
+    filter="url(#wide-feather)"
+    transform="translate(400 360) scale(.94) translate(-400 -360)"
+  />
+  <path
+    d="M404 24C474 20 535 48 586 79C647 117 687 170 717 232C742 285 730 337 741 395C751 455 715 506 684 554C646 613 591 652 524 674C461 695 403 682 337 691C276 699 224 674 171 644C113 611 83 555 54 498C26 443 31 386 37 328C43 264 62 208 102 157C144 102 196 62 260 45C310 31 355 34 404 24Z"
+    fill="white"
+    opacity="0.76"
+    filter="url(#soft-feather)"
+    transform="translate(400 360) scale(.91) translate(-400 -360)"
+  />
+  <path
+    d="M404 24C474 20 535 48 586 79C647 117 687 170 717 232C742 285 730 337 741 395C751 455 715 506 684 554C646 613 591 652 524 674C461 695 403 682 337 691C276 699 224 674 171 644C113 611 83 555 54 498C26 443 31 386 37 328C43 264 62 208 102 157C144 102 196 62 260 45C310 31 355 34 404 24Z"
+    fill="white"
+    transform="translate(400 360) scale(.76) translate(-400 -360)"
+  />
+</svg>

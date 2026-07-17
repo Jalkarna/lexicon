@@ -1,53 +1,35 @@
 # Lexicon
 
-Lexicon is a voice layer for web products. Developers map the routes and actions that matter once; the voice agent resolves language through those explicit mappings and executes the target action deterministically.
+This repository contains two independent projects:
 
-## Run the demo
+```text
+lexicon/
+├── sdk/    # @lexicon/sdk — the reusable, publishable product
+└── demo/   # @lexicon/demo — a separate Next.js app using the SDK
+```
+
+The root is only a container. It has no package manifest, lockfile, or dependency tree. SDK code never imports the demo, React, or Next.js. The demo installs `@lexicon/sdk` from `../sdk` exactly as a local external package.
+
+## Install the SDK
 
 ```bash
+cd sdk
+npm install
+npm run build
+```
+
+## Install and run the demo
+
+```bash
+cd demo
 npm install
 cp .env.example .env.local
 npm run dev
 ```
 
-Open the local URL, choose **Open demo**, and use the Lexicon voice surface. The workspace includes overview, analytics, customers, orders, invoices, settings, notifications, profile management, and a developer console.
+Set `LEXICON_GEMINI_API_KEY` in `.env.local`. `GOOGLE_API_KEY` and `GEMINI_API_KEY` are also accepted.
 
-## Voice runtime
+## Packages
 
-The demo intentionally has two execution paths:
-
-- `app/api/transcribe/route.ts` receives a short WAV recording captured with `getUserMedia`, transcribes it server-side with Gemini, and returns only the command text. There is no simulated microphone fallback.
-- `app/api/agent/route.ts` is the command bridge. It opens a short Gemini Live session and gives Gemini a single native function, `select_mapped_action`, whose enum is derived from the developer-defined action map. If Gemini is unavailable, the route returns the local deterministic mapping.
-- `lib/gemini-live.ts` contains the server-side Gemini Live session configuration and sends command text with `sendRealtimeInput`, the Live API's real-time input path. Set `LEXICON_GEMINI_API_KEY` in `.env.local` to keep Lexicon’s key isolated from any shared `GOOGLE_API_KEY` or `GEMINI_API_KEY` in the host environment.
-
-No Playwright, Selenium, Puppeteer, screenshots, or visual scraping are used. Execution is always based on the mapped application structure.
-
-## SDK shape
-
-`lib/sdk.ts` demonstrates the lightweight browser integration:
-
-```ts
-import { mountLexicon } from "@/lib/sdk"
-
-const lexicon = mountLexicon("northstar", { root: document.querySelector("#app")! })
-lexicon.register({
-  id: "export-report",
-  label: "Export report",
-  selector: "[data-lexicon='export-report']",
-  needsConfirmation: true,
-})
-```
-
-`scan()` discovers only developer-marked `[data-lexicon]` elements. `execute()` runs either the registered selector or a framework adapter's explicit `handler`, then publishes a `lexicon:executed` event for observability. `executeWorkflow()` composes developer-authored `navigate`, `click`, `fill`, and `extract` steps; it never falls back to visual scraping or arbitrary browser control.
-
-## Design and UI registry
-
-The project is initialized with shadcn and uses the Cult UI registry. The configuration lives in `components.json`; Cult UI text animation, animated numbers, and terminal playback are used in the landing experience. The project-level Codex MCP configuration is added through the shadcn CLI setup.
-
-## Verification
-
-```bash
-npm run typecheck
-npm run lint
-npm run build
-```
+- [`sdk/`](./sdk) contains manifests, tool generation, conversational field collection, guarded confirmation, capability execution, Gemini adapters, and browser Live audio utilities. It owns its own `package-lock.json`, builds to `sdk/dist`, and packs as `@lexicon/sdk`.
+- [`demo/`](./demo) contains the complete Rillwork Next.js application: routes, UI, demo data, capability mappings, handlers, assets, and environment configuration.
