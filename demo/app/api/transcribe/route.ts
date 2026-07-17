@@ -54,7 +54,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Voice transcription is not configured." }, { status: 503 })
   }
 
-  const form = await request.formData()
+  const form = await request.formData().catch(() => undefined)
+  if (!form) {
+    return NextResponse.json({ error: "A valid audio form submission is required." }, { status: 400 })
+  }
   const audio = form.get("audio")
   if (!(audio instanceof File)) {
     return NextResponse.json({ error: "An audio recording is required." }, { status: 400 })
