@@ -42,3 +42,11 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# local demo-film production (captures, generated voices, renders, and account metadata)
+/demo-video/
+/demo-video-v2/
+/CODEX_WINDOWS_RECORDING.md
+
+# local setup archives
+*.zip
